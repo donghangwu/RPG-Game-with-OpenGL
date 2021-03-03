@@ -322,19 +322,20 @@ export class Project extends Scene {
             sun: new defs.Subdivision_Sphere(4),
             planet_1: new defs.Subdivision_Sphere(4),
             map: new Ground(),
+            sky: new defs.Subdivision_Sphere(4),
         };
 
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .4, diffusivity: .6, color: hex_color("#f9d71c")}),
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
             sun: new Material(new Textured_Phong(),
-                {ambient: 1,specularity:0, diffusivity: 0, color: hex_color("#456123")}),
+                {ambient: 1,specularity:0, diffusivity: 0, color: hex_color("#f9d71c")}),
             planet_1: new Material(new Textured_Phong(),
                 {specularity:1,ambient: 1,diffusivity:1, color: hex_color("#FF0000")}),
             ring: new Material(new Ring_Shader()),
@@ -344,10 +345,19 @@ export class Project extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/grass_t.jpg")
             }),
+            day_sky_text: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/sky_t2.jpg") 
+            }),
+            night_sky_text: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/star_t.jpg") 
+            }),
+            
         }
         this.draw_bullet=true;
-        this.pistol_transform = Mat4.identity();
-        this.bullet_transform = this.pistol_transform;
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 5, 0));
     }
 
@@ -380,47 +390,68 @@ export class Project extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        // TODO: Lighting (Requirement 2)
-        const light_position = vec4(10, 10, 10, 1);
+        const light_position = vec4(10, 1, 10, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 100000)];
+
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         
-        this.pistol_transform = my_cam
-        this.bullet_transform=this.pistol_transform
-        // Draw bullet
-        if(this.draw_bullet){
-            this
-        }
+  
         
         
         const yellow = hex_color("#fac91a");
-        let model_transform = Mat4.identity();
-       // model_transform=model_transform.times(Mat4.rotation(g_z_rot, 0, 1, 0))
-        //this.shapes.sun.draw(context, program_state, model_transform, this.materials.sun);
-        this.shapes.sign.draw(context, program_state, model_transform, this.materials.map_text);
+        let model_transform = Mat4.identity()
 
-        this.shapes.map.draw(context, program_state, model_transform, this.materials.map_text);
-        //console.log("sum:",model_transform);
-        //planet 1
-        let model_transform_p1=Mat4.identity();
-       // model_transform_p1=model_transform_p1.times(Mat4.rotation(g_z_rot, 0, 1, 0))
+        //the sun is roating around the z axis
+        let sun_tran=Mat4.identity().times(Mat4.rotation(t/5  , 0, 0, 1))
+        .times(Mat4.translation(100, 0, 1))
+        .times(Mat4.scale(5,5,5))
+
+        //transformation for the sky
+        let sky_cover = Mat4.identity()
+                    //.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
+                    .times(Mat4.scale(200,200,250))
+                    .times(Mat4.rotation(t/20  , 1, 0, 1));
        
-        //model_transform_p1=model_transform_p1.times(Mat4.translation(my_cam[0],my_cam[1],my_cam[2]));//translate by 5 then roate around the orgin
-        if(my_cam[2]<0)
+        this.shapes.sun.draw(context, program_state, sun_tran, this.materials.sun);
+
+        //sunset change the lighting
+        if(sun_tran[1][3]<-2)
         {
+            console.log("sunset!")
+            program_state.lights = [new Light(vec4(0, 0, 1, 0), color(1, 1, 1, 1), 1)];
+            this.shapes.sky.draw(context, program_state, sky_cover, this.materials.night_sky_text);
 
         }
-        //model_transform_p1=model_transform_p1.times(Mat4.translation(0,0,1));
-        model_transform_p1=model_transform_p1.times(Mat4.scale(0.5,0.5,.5));
+        else
+        {
+            program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
+            this.shapes.sky.draw(context, program_state, sky_cover, this.materials.day_sky_text);
+
+        }
+
+
+
+        this.shapes.sign.draw(context, program_state, model_transform, this.materials.map_text);
+
+        //draw the ground
+        this.shapes.map.draw(context, program_state, model_transform, this.materials.map_text);
+              
         
-        // model_transform_p1=model_transform_p1.times(Mat4.translation(5,0,0));
-        // model_transform_p1=model_transform_p1.times(Mat4.rotation(t,0,1,0));//at the origin roate around it self then translate to right by 5
-        //console.log("pp:",test_cam[0][3])
+
+
+
+
+
+        // object follows the camera
+        
         let left=Mat4.inverse(test_cam)
         let right =Mat4.inverse(test_cam)
         let desired=Mat4.inverse(test_cam)
-        desired=desired.times(Mat4.scale(0.001,0.001,0.15))//.times(Mat4.translation(0,0,5))
+
+
+        desired=desired.times(Mat4.scale(0.001,0.001,0.15))
+
         ///console.log("desired:",desired)
         this.shapes.planet_1.draw(context, program_state, desired, this.materials.planet_1);
         left=left.times(Mat4.scale(0.001,0.01,0.15))
