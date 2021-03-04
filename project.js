@@ -4,6 +4,8 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Texture,Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
+var blocked =false;
+
 var mouse_x=0,mouse_y=0
 // Camera coordinate system 
 let my_cam=Mat4.look_at(vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0));
@@ -103,7 +105,8 @@ const Mouse_Picking = defs.Movement_Controls =
             this.new_line();
 
             this.key_triggered_button("Up", [" "], () => {this.thrust[1] = -6;}, undefined, () => {this.thrust[1] = 0;this.thrust[2] = 0});
-            this.key_triggered_button("Forward", ["w"], () => this.thrust[2] = 1, undefined, () => this.thrust[2] = 0);
+            this.key_triggered_button("Forward", ["w"], () => {
+                        if(!blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
             this.new_line();
             this.key_triggered_button("Left", ["a"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
             this.key_triggered_button("Back", ["s"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
@@ -124,7 +127,7 @@ const Mouse_Picking = defs.Movement_Controls =
             this.key_triggered_button("Roll left", [","], () => this.roll = 1, undefined, () => this.roll = 0);
             this.key_triggered_button("Roll right", ["."], () => this.roll = -1, undefined, () => this.roll = 0);
             this.new_line();
-            this.key_triggered_button("(Un)freeze mouse look around", ["f"], () => this.look_around_locked ^= 1, "#8B8885");
+            //this.key_triggered_button("(Un)freeze mouse look around", ["f"], () => this.look_around_locked ^= 1, "#8B8885");
             this.new_line();
             this.key_triggered_button("Go to world origin", ["r"], () => {
                 this.matrix().set_identity(4, 4);
@@ -290,8 +293,107 @@ const Mouse_Picking = defs.Movement_Controls =
         }
     }
 
+    
+export class Shape_From_File extends Shape {                                   // **Shape_From_File** is a versatile standalone Shape that imports
+                                                                               // all its arrays' data from an .obj 3D model file.
+    constructor(filename) {
+        super("position", "normal", "texture_coord");
+        // Begin downloading the mesh. Once that completes, return
+        // control to our parse_into_mesh function.
+        this.load_file(filename);
+    }
 
+    load_file(filename) {                             // Request the external file and wait for it to load.
+        // Failure mode:  Loads an empty shape.
+        return fetch(filename)
+            .then(response => {
+                if (response.ok) return Promise.resolve(response.text())
+                else return Promise.reject(response.status)
+            })
+            .then(obj_file_contents => this.parse_into_mesh(obj_file_contents))
+            .catch(error => {
+                this.copy_onto_graphics_card(this.gl);
+            })
+    }
 
+    parse_into_mesh(data) {                           // Adapted from the "webgl-obj-loader.js" library found online:
+        var verts = [], vertNormals = [], textures = [], unpacked = {};
+
+        unpacked.verts = [];
+        unpacked.norms = [];
+        unpacked.textures = [];
+        unpacked.hashindices = {};
+        unpacked.indices = [];
+        unpacked.index = 0;
+
+        var lines = data.split('\n');
+
+        var VERTEX_RE = /^v\s/;
+        var NORMAL_RE = /^vn\s/;
+        var TEXTURE_RE = /^vt\s/;
+        var FACE_RE = /^f\s/;
+        var WHITESPACE_RE = /\s+/;
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            var elements = line.split(WHITESPACE_RE);
+            elements.shift();
+
+            if (VERTEX_RE.test(line)) verts.push.apply(verts, elements);
+            else if (NORMAL_RE.test(line)) vertNormals.push.apply(vertNormals, elements);
+            else if (TEXTURE_RE.test(line)) textures.push.apply(textures, elements);
+            else if (FACE_RE.test(line)) {
+                var quad = false;
+                for (var j = 0, eleLen = elements.length; j < eleLen; j++) {
+                    if (j === 3 && !quad) {
+                        j = 2;
+                        quad = true;
+                    }
+                    if (elements[j] in unpacked.hashindices)
+                        unpacked.indices.push(unpacked.hashindices[elements[j]]);
+                    else {
+                        var vertex = elements[j].split('/');
+
+                        unpacked.verts.push(+verts[(vertex[0] - 1) * 3 + 0]);
+                        unpacked.verts.push(+verts[(vertex[0] - 1) * 3 + 1]);
+                        unpacked.verts.push(+verts[(vertex[0] - 1) * 3 + 2]);
+
+                        if (textures.length) {
+                            unpacked.textures.push(+textures[((vertex[1] - 1) || vertex[0]) * 2 + 0]);
+                            unpacked.textures.push(+textures[((vertex[1] - 1) || vertex[0]) * 2 + 1]);
+                        }
+
+                        unpacked.norms.push(+vertNormals[((vertex[2] - 1) || vertex[0]) * 3 + 0]);
+                        unpacked.norms.push(+vertNormals[((vertex[2] - 1) || vertex[0]) * 3 + 1]);
+                        unpacked.norms.push(+vertNormals[((vertex[2] - 1) || vertex[0]) * 3 + 2]);
+
+                        unpacked.hashindices[elements[j]] = unpacked.index;
+                        unpacked.indices.push(unpacked.index);
+                        unpacked.index += 1;
+                    }
+                    if (j === 3 && quad) unpacked.indices.push(unpacked.hashindices[elements[0]]);
+                }
+            }
+        }
+        {
+            const {verts, norms, textures} = unpacked;
+            for (var j = 0; j < verts.length / 3; j++) {
+                this.arrays.position.push(vec3(verts[3 * j], verts[3 * j + 1], verts[3 * j + 2]));
+                this.arrays.normal.push(vec3(norms[3 * j], norms[3 * j + 1], norms[3 * j + 2]));
+                this.arrays.texture_coord.push(vec(textures[2 * j], textures[2 * j + 1]));
+            }
+            this.indices = unpacked.indices;
+        }
+        this.normalize_positions(false);
+        this.ready = true;
+    }
+
+    draw(context, program_state, model_transform, material) {               // draw(): Same as always for shapes, but cancel all
+        // attempts to draw the shape before it loads:
+        if (this.ready)
+            super.draw(context, program_state, model_transform, material);
+    }
+}
 
 
 
@@ -323,6 +425,10 @@ export class Project extends Scene {
             planet_1: new defs.Subdivision_Sphere(4),
             map: new Ground(),
             sky: new defs.Subdivision_Sphere(4),
+            fence :new Shape_From_File("assets/fence.obj"),
+            low_tree :new Shape_From_File("assets/low_poly_tree.obj"),
+            bow :new Shape_From_File("assets/Bow.obj"),
+            //high_tree :new Shape_From_File("assets/stone_pine_export.obj"),
         };
 
         // *** Materials
@@ -355,16 +461,35 @@ export class Project extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/star_t.jpg") 
             }),
+            fence: new Material(new Textured_Phong(), {
+                color: hex_color("#a64a2b"),
+                ambient: .1, diffusivity: 1, specularity: 0.5,
+                //texture: new Texture("assets/fence_text.jpg") 
+            }),
+            bow: new Material(new Textured_Phong(), {
+                color: hex_color("#a64a2b"),
+                ambient: .1, diffusivity: .1, specularity: 1,
+                //texture: new Texture("assets/fence_text.jpg") 
+            }), 
+            tree: new Material(new Textured_Phong(), {
+                color: hex_color("#00b300"),
+                ambient: .1, diffusivity: 1, specularity: 0.5,
+                //texture: new Texture("assets/fence_text.jpg") 
+            }),
+
             
         }
         this.draw_bullet=true;
+        this.creating_bullet = false;
+        this.bullet_info = [];//added by Wei Du
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 5, 0));
     }
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Shoot", ["g"], () => {
+        this.key_triggered_button("Shoot", ["f"], () => {
             this.draw_bullet=true;
+            this.creating_bullet = true;
             console.log("shoot!\n\n")
         });
         this.new_line();
@@ -390,11 +515,15 @@ export class Project extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(10, 1, 10, 1);
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
+        let sun_tran=Mat4.identity().times(Mat4.rotation(t/5  , 0, 0, 1))
+        .times(Mat4.translation(100, 0, 1))
+        .times(Mat4.scale(5,5,5)) 
+        var light_position = vec4(sun_tran[0][3], sun_tran[1][3], sun_tran[2][3], 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 100000)];
 
 
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         
   
         
@@ -403,14 +532,12 @@ export class Project extends Scene {
         let model_transform = Mat4.identity()
 
         //the sun is roating around the z axis
-        let sun_tran=Mat4.identity().times(Mat4.rotation(t/5  , 0, 0, 1))
-        .times(Mat4.translation(100, 0, 1))
-        .times(Mat4.scale(5,5,5))
+        
 
         //transformation for the sky
         let sky_cover = Mat4.identity()
                     //.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
-                    .times(Mat4.scale(200,200,250))
+                    .times(Mat4.scale(300,300,250))
                     .times(Mat4.rotation(t/20  , 1, 0, 1));
        
         this.shapes.sun.draw(context, program_state, sun_tran, this.materials.sun);
@@ -418,13 +545,15 @@ export class Project extends Scene {
         //sunset change the lighting
         if(sun_tran[1][3]<-2)
         {
+            //blocked=true;
             console.log("sunset!")
-            program_state.lights = [new Light(vec4(0, 0, 1, 0), color(1, 1, 1, 1), 1)];
+            program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1)];
             this.shapes.sky.draw(context, program_state, sky_cover, this.materials.night_sky_text);
 
         }
         else
         {
+            blocked=false;
             program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
             this.shapes.sky.draw(context, program_state, sky_cover, this.materials.day_sky_text);
 
@@ -436,10 +565,89 @@ export class Project extends Scene {
 
         //draw the ground
         this.shapes.map.draw(context, program_state, model_transform, this.materials.map_text);
-              
         
 
 
+        let low_tree_tran = Mat4.identity().times(Mat4.translation(2,0,10))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(12,0,10))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(12,0,-33))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(36,0,22))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(16,0,14))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(-23,0,26))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(-12,0,20))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(-49,0,-20))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+
+        low_tree_tran=Mat4.identity().times(Mat4.translation(49,0,50))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(59,0,-20))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(35,0,-23))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(57,0,21))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran=Mat4.identity().times(Mat4.translation(46,0,30))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+
+        let high_tree_tran = Mat4.identity().times(Mat4.translation(10,0,10))
+
+        // Draw bullet-- added by Wei Du
+        if (this.creating_bullet){
+            // bullet_info : [init_time, init_speed, init_pos, gravity]
+            this.bullet_info.push([t,3,Mat4.inverse(test_cam),0.098]);
+            this.creating_bullet = false;
+        }
+        for (let i = 0; i< this.bullet_info.length; i++){
+            let parabola = Mat4.translation(0,
+                this.bullet_info[i][3]*(t-this.bullet_info[i][0])*(-t+this.bullet_info[i][0]),
+                -5+this.bullet_info[i][1]*(-t+this.bullet_info[i][0]));
+
+            this.shapes.bullet.draw(context, program_state,
+                                                             // I just randomly chose my size of bullet
+                this.bullet_info[i][2].times(parabola.times((Mat4.scale(0.05,0.05,0.05)))),
+                this.materials.planet_1);
+        }
+        // delete a bullet if it's fired certain amount of times ago, here I chose 5 sec
+         while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 5){
+            this.bullet_info.shift();
+        }
+        // end of Draw bullet-- added by Wei Du
+
+
+        //fences
+        for(var i=-70;i<70;i++)
+        {
+            for(var j=-70;j<70;j++)
+            {
+                if(i===-70||i==69)
+                {
+                    let fence_tran = Mat4.identity()
+                                    .times(Mat4.translation(i,-2.5,-j))
+                                    .times(Mat4.scale(1,2,1))
+                                    .times(Mat4.rotation(Math.PI/2,0,1,0))
+                    this.shapes.fence.draw(context, program_state, fence_tran, this.materials.fence);
+    
+                }
+                if(j==-70 ||j==69)
+                {
+                    let fence_tran = Mat4.identity()
+                    .times(Mat4.translation(i,-2.5,-j))
+                    .times(Mat4.scale(1,2,1))
+                    //.times(Mat4.rotation(Math.PI/2,0,1,0))
+                    this.shapes.fence.draw(context, program_state, fence_tran, this.materials.fence);
+
+                }
+            }
+            
+        }
+        
 
 
 
@@ -454,12 +662,11 @@ export class Project extends Scene {
 
         ///console.log("desired:",desired)
         this.shapes.planet_1.draw(context, program_state, desired, this.materials.planet_1);
-        left=left.times(Mat4.scale(0.001,0.01,0.15))
-        left=left.times(Mat4.translation(-60,0,0))
-        this.shapes.planet_1.draw(context, program_state, left, this.materials.planet_1);
-        right=right.times(Mat4.scale(0.001,0.01,0.15))
-        right=right.times(Mat4.translation(60,0,0))
-        this.shapes.planet_1.draw(context, program_state, right, this.materials.planet_1);
+
+        right=right.times(Mat4.translation(3.5,0,-10)).times(Mat4.rotation(-Math.PI/2,0,1,0))
+                    .times(Mat4.rotation(Math.PI/5,0,0,1))
+                    .times(Mat4.scale(1.5,1.5,1.5))
+        this.shapes.bow.draw(context, program_state, right, this.materials.bow);
 
 
     
@@ -479,9 +686,9 @@ class Ground extends Shape{
 
     draw_ground()
     {
-        for(var i=-50;i<50;i++)
+        for(var i=-70;i<70;i++)
         {
-            for(var j=-50;j<50;j++)
+            for(var j=-70;j<70;j++)
             {
                 defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
             }

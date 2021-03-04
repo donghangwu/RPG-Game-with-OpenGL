@@ -1,0 +1,13 @@
+# Blender MTL File: 'Axe.blend'
+# Material Count: 1
+newmtl Material_Axe.png0001.png
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\Users\Bertie\Desktop\mODELS Horn burge LORD OF THE RINGS\Bow BLEND Format\Bow_Diffuse.png
+
+
