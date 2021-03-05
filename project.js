@@ -218,22 +218,7 @@ const Mouse_Picking = defs.Movement_Controls =
 
 
         third_person_arcball(radians_per_frame) {
-            // (Internal helper function)
-            // Spin the scene around a point on an axis determined by user mouse drag:
-            // const dragging_vector = vec(mouse_x, mouse_y).times(25);//this.mouse.from_center.minus(this.mouse.anchor);
-            // mouse_x = mouse_y = 0;
-            // if (dragging_vector.norm() <= 0)
-            //     return;
-            // this.matrix().post_multiply(Mat4.translation(0, 0, -25));
-            // this.inverse().pre_multiply(Mat4.translation(0, 0, +25));
 
-            // const rotation = Mat4.rotation(radians_per_frame * dragging_vector.norm(),
-            //     dragging_vector[1], dragging_vector[0], 0);
-            // this.matrix().post_multiply(rotation);
-            // this.inverse().pre_multiply(rotation);
-
-            // this.matrix().post_multiply(Mat4.translation(0, 0, +25));
-            // this.inverse().pre_multiply(Mat4.translation(0, 0, -25));
 
             let dragging_vector = vec(mouse_x, mouse_y).times(25);
 
@@ -429,7 +414,9 @@ export class Project extends Scene {
             fence :new Shape_From_File("assets/fence.obj"),
             low_tree :new Shape_From_File("assets/low_poly_tree.obj"),
             bow :new Shape_From_File("assets/Bow.obj"),
-            //high_tree :new Shape_From_File("assets/stone_pine_export.obj"),
+            Pokemon:new Shape_From_File("assets/Pokemon.obj"),
+            monster:new Shape_From_File("assets/Zealot.obj"),
+            arrow :new Shape_From_File("assets/arrow.obj"),
         };
 
         // *** Materials
@@ -477,12 +464,30 @@ export class Project extends Scene {
                 ambient: .1, diffusivity: 1, specularity: 0.5,
                 //texture: new Texture("assets/fence_text.jpg") 
             }),
+            monster: new Material(new Textured_Phong(), {
+                //color: hex_color("#000000"),
+                ambient: .1, diffusivity: 1, specularity: 0.5,
+                //texture: new Texture("assets/fence_text.jpg") 
+            }),
+            Zealot: new Material(new Textured_Phong(), {
+                color: hex_color("#6a0dad"),
+                ambient: .1, diffusivity: 1, specularity: 0.5,
+                texture: new Texture("assets/Zealot_emissive.png") 
+            }),
+            arrow: new Material(new Textured_Phong(), {
+                color: hex_color("#a64a2b"),
+                ambient: .1, diffusivity: 0, specularity: .5,
+                //texture: new Texture("assets/fence_text.jpg") 
+            }),
 
             
         }
         this.draw_bullet=true;
         this.creating_bullet = false;
         this.bullet_info = [];//added by Wei Du
+        this.spawning_creature = true;//added by Wei Du : [init_time, , init_pos, gravity]
+        this.creature_info = [];//added by Wei Du
+
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 5, 0));
     }
 
@@ -492,6 +497,11 @@ export class Project extends Scene {
             this.draw_bullet=true;
             this.creating_bullet = true;
             console.log("shoot!\n\n")
+        });
+        this.key_triggered_button("spawn monsters", ["c"], () => {
+            this.spawning_creature=true;
+
+            console.log("creature spawned!\n\n")
         });
         this.new_line();
         this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
@@ -566,14 +576,6 @@ export class Project extends Scene {
 
         //draw the ground
         this.shapes.map.draw(context, program_state, model_transform, this.materials.map_text);
-        // for(var i=-70;i<70;i++)
-        // {
-        //     for(var j=-70;j<70;j++)
-        //     {
-        //         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
-        //     }
-            
-        // }
 
 
         let low_tree_tran=[]
@@ -616,7 +618,13 @@ export class Project extends Scene {
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(46,0,30)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[12], this.materials.tree);
 
-        let high_tree_tran = Mat4.identity().times(Mat4.translation(10,0,10))
+
+        // let monster_tran = Mat4.identity().times(Mat4.translation(30,0,10))
+        // this.shapes.monster.draw(context, program_state, monster_tran, this.materials.Zealot);
+        
+        //  monster_tran = monster_tran.times(Mat4.translation(30,0,10)).times(Mat4.scale(30,0,10))
+        // this.shapes.arrow.draw(context, program_state, monster_tran, this.materials.arrow);
+
 
         // Draw bullet-- added by Wei Du
         if (this.creating_bullet){
@@ -629,10 +637,10 @@ export class Project extends Scene {
                 this.bullet_info[i][3]*(t-this.bullet_info[i][0])*(-t+this.bullet_info[i][0]),
                 -5+this.bullet_info[i][1]*(-t+this.bullet_info[i][0]));
 
-            this.shapes.bullet.draw(context, program_state,
+            this.shapes.arrow.draw(context, program_state,
                                                              // I just randomly chose my size of bullet
-                this.bullet_info[i][2].times(parabola.times((Mat4.scale(0.05,0.05,0.05)))),
-                this.materials.planet_1);
+                this.bullet_info[i][2].times(parabola.times((Mat4.rotation(Math.PI/3,1,0,0)).times((Mat4.scale(1.5,1,1.5))))),
+                this.materials.arrow);
         }
         // delete a bullet if it's fired certain amount of times ago, here I chose 5 sec
          while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 5){
@@ -640,6 +648,45 @@ export class Project extends Scene {
         }
         // end of Draw bullet-- added by Wei Du
 
+
+
+         // Draw monster-- added by Wei Du
+         if (this.spawning_creature){
+            // creature_info : [init_time, speed, pos, chasing_player, min_chase_distance, max_chase_distance, facing_trans]
+            // here I chose them to chase the player if player is whinin 40 units nearby
+            this.creature_info.push([t,1,Mat4.translation(0,0,0),true, 4, 40,Mat4.identity()]);
+            this.spawning_creature = false;
+        }
+        for (let i = 0; i< this.creature_info.length; i++){
+            let distance = vec4(0,0,0,1);
+            distance = Mat4.inverse(test_cam).minus(this.creature_info[i][2]).times(distance);
+            if (this.creature_info[i][3]){
+                if (distance.norm() > this.creature_info[i][4] && distance.norm() <= this.creature_info[i][5]){
+                    distance = distance.normalized();
+                    this.creature_info[i][2] =
+                        Mat4.translation(
+                            distance[0]*dt*this.creature_info[i][1],
+                            distance[1]*dt*this.creature_info[i][1],
+                            distance[2]*dt*this.creature_info[i][1]
+                        ).times(this.creature_info[i][2]);
+                    this.creature_info[i][6] = Matrix.of(
+                        [ distance[0], 0, -distance[2], 0],
+                        [ 0, 1, 0, 0],
+                        [distance[2], 0, distance[0], 0],
+                        [ 0, 0, 0, 1]
+                    );
+
+                }
+            }
+            this.shapes.monster.draw(context, program_state,
+                Mat4.identity()
+                .times(this.creature_info[i][2]).times(this.creature_info[i][6]).times((Mat4.rotation(Math.PI/2,0,1,0))),
+                this.materials.Zealot);
+        }
+        // de-spawn if it's created certain amount of times ago, here I chose 30 sec
+        while (this.creature_info.length>0 && t-this.creature_info[0][0] > 30){
+            this.creature_info.shift();
+        }
 
         //fences
         for(var z=-70,l=-70,r=69;z<70;z++)
