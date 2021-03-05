@@ -413,6 +413,7 @@ export class Project extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             bullet:new defs.Cube(),
+            square:new defs.Cube(),
             sign: new Check(),
             cross: new Crosshair(),
             torus: new defs.Torus(15, 15),
@@ -565,36 +566,55 @@ export class Project extends Scene {
 
         //draw the ground
         this.shapes.map.draw(context, program_state, model_transform, this.materials.map_text);
+        // for(var i=-70;i<70;i++)
+        // {
+        //     for(var j=-70;j<70;j++)
+        //     {
+        //         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
+        //     }
+            
+        // }
+
+
+        let low_tree_tran=[]
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(2,0,10)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[0], this.materials.tree);
         
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(12,0,10)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[1], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(12,0,-33)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[2], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(36,0,22)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[3], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(16,0,14)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[4], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(-23,0,26)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[5], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(-12,0,20)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[6], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(-49,0,-20)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[7], this.materials.tree);
 
-
-        let low_tree_tran = Mat4.identity().times(Mat4.translation(2,0,10))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(12,0,10))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(12,0,-33))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(36,0,22))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(16,0,14))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(-23,0,26))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(-12,0,20))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(-49,0,-20))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-
-        low_tree_tran=Mat4.identity().times(Mat4.translation(49,0,50))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(59,0,-20))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(35,0,-23))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(57,0,21))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
-        low_tree_tran=Mat4.identity().times(Mat4.translation(46,0,30))
-        this.shapes.low_tree.draw(context, program_state, low_tree_tran, this.materials.tree);
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(49,0,50)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[8], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(59,0,-20)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[9], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(35,0,-23)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[10], this.materials.tree);
+        
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(57,0,21)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[11], this.materials.tree);
+       
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(46,0,30)))
+        this.shapes.low_tree.draw(context, program_state, low_tree_tran[12], this.materials.tree);
 
         let high_tree_tran = Mat4.identity().times(Mat4.translation(10,0,10))
 
@@ -622,30 +642,33 @@ export class Project extends Scene {
 
 
         //fences
-        for(var i=-70;i<70;i++)
+        for(var z=-70,l=-70,r=69;z<70;z++)
         {
-            for(var j=-70;j<70;j++)
-            {
-                if(i===-70||i==69)
-                {
-                    let fence_tran = Mat4.identity()
-                                    .times(Mat4.translation(i,-2.5,-j))
-                                    .times(Mat4.scale(1,2,1))
-                                    .times(Mat4.rotation(Math.PI/2,0,1,0))
-                    this.shapes.fence.draw(context, program_state, fence_tran, this.materials.fence);
-    
-                }
-                if(j==-70 ||j==69)
-                {
-                    let fence_tran = Mat4.identity()
-                    .times(Mat4.translation(i,-2.5,-j))
-                    .times(Mat4.scale(1,2,1))
-                    //.times(Mat4.rotation(Math.PI/2,0,1,0))
-                    this.shapes.fence.draw(context, program_state, fence_tran, this.materials.fence);
+            let fence_tranr = Mat4.identity()
+            .times(Mat4.translation(l,-2.5,z))
+            .times(Mat4.scale(1,2,1))
+            .times(Mat4.rotation(Math.PI/2,0,1,0))
+            this.shapes.fence.draw(context, program_state, fence_tranr, this.materials.fence);
 
-                }
-            }
-            
+            let fence_tranl = Mat4.identity()
+            .times(Mat4.translation(r,-2.5,z))
+            .times(Mat4.scale(1,2,1))
+            .times(Mat4.rotation(Math.PI/2,0,1,0))
+            this.shapes.fence.draw(context, program_state, fence_tranl, this.materials.fence);
+
+        }
+        for(var i=-70,j=-70,k=69;i<70;i++)
+        {
+            let fence_tranr = Mat4.identity()
+            .times(Mat4.translation(i,-2.5,-j))
+            .times(Mat4.scale(1,2,1))
+            this.shapes.fence.draw(context, program_state, fence_tranr, this.materials.fence);
+
+            let fence_tranl = Mat4.identity()
+            .times(Mat4.translation(i,-2.5,-k))
+            .times(Mat4.scale(1,2,1))
+            this.shapes.fence.draw(context, program_state, fence_tranl, this.materials.fence);
+
         }
         
 
@@ -734,14 +757,7 @@ class Check extends Shape{
         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(-4,0,0))));
         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(2,0,0))));
         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(4,0,0))));
-        // for(var i=-50;i<50;i++)
-        // {
-        //     for(var j=-50;j<50;j++)
-        //     {
-        //         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
-        //     }
-            
-        // }
+
     }
 
 }
