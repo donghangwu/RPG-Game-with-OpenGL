@@ -659,6 +659,7 @@ export class Project extends Scene {
                     .times(Mat4.translation(0,-2,0))).times(distance);
                 if (distance.norm() < 8) {
                     this.creature_info.splice(j, 1);
+                    this.bullet_info.splice(i,1);
                 }
             }
         }
