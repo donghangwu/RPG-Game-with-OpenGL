@@ -5,7 +5,7 @@ const {
 } = tiny;
 
 var blocked =false;
-
+var tree_blocked = false;
 var mouse_x=0,mouse_y=0
 // Camera coordinate system 
 let my_cam=Mat4.look_at(vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0));
@@ -92,8 +92,10 @@ const Mouse_Picking = defs.Movement_Controls =
             // make_control_panel(): Sets up a panel of interactive HTML elements, including
             // buttons with key bindings for affecting this scene, and live info readouts.
             this.control_panel.innerHTML += "Click and drag the scene to spin your viewpoint around it.<br>";
-            this.live_string(box => box.textContent = "- Position: " + this.pos[0].toFixed(2) + ", " + this.pos[1].toFixed(2)
-                + ", " + this.pos[2].toFixed(2));
+            this.live_string(box => box.textContent = "- Position: " + Mat4.inverse(test_cam)[0][3].toFixed(2)
+                + "  " +Mat4.inverse(test_cam)[2][3].toFixed(2) + "blocked:" + blocked
+                + "   " + "tree_blocked: " + tree_blocked);
+
             this.new_line();
             // The facing directions are surprisingly affected by the left hand rule:
             this.z_axis[2]=0
@@ -106,7 +108,7 @@ const Mouse_Picking = defs.Movement_Controls =
 
             this.key_triggered_button("Up", [" "], () => {this.thrust[1] = -6;}, undefined, () => {this.thrust[1] = 0;this.thrust[2] = 0});
             this.key_triggered_button("Forward", ["w"], () => {
-                        if(!blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
+                        if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
             this.new_line();
             this.key_triggered_button("Left", ["a"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
             this.key_triggered_button("Back", ["s"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
@@ -213,7 +215,11 @@ const Mouse_Picking = defs.Movement_Controls =
                 
                  
             }
-                
+
+            let new_pos = Mat4.inverse(test_cam);
+            let pos_x = new_pos[0][3];
+            let pos_z = new_pos[2][3];
+            blocked = (pos_x < -68 || pos_x > 69 || pos_z < -69 || pos_z > 69);
         }
 
 
@@ -425,7 +431,6 @@ export class Project extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#f9d71c")}),
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
-            ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
             sun: new Material(new Textured_Phong(),
@@ -618,7 +623,17 @@ export class Project extends Scene {
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(46,0,30)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[12], this.materials.tree);
 
-
+        //testing to see if player is blocked by tree
+        let player_pos = Mat4.inverse(test_cam);
+        let tree_pos = Mat4.identity();
+        tree_blocked = false;
+        for(var i = 0; i < low_tree_tran.length; i++){
+            tree_pos = low_tree_tran[i];
+            let d = (player_pos[0][3] - tree_pos[0][3])**2 + (player_pos[2][3] - tree_pos[2][3])**2;
+            if(d < 5) {
+                tree_blocked = true;
+            }
+        }
         // let monster_tran = Mat4.identity().times(Mat4.translation(30,0,10))
         // this.shapes.monster.draw(context, program_state, monster_tran, this.materials.Zealot);
         
