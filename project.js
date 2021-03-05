@@ -509,13 +509,7 @@ export class Project extends Scene {
             console.log("creature spawned!\n\n")
         });
         this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
         this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
     }
 
     display(context, program_state) {
@@ -569,7 +563,7 @@ export class Project extends Scene {
         }
         else
         {
-            blocked=false;
+            //locked=false;
             program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
             this.shapes.sky.draw(context, program_state, sky_cover, this.materials.day_sky_text);
 
@@ -584,7 +578,7 @@ export class Project extends Scene {
 
 
         let low_tree_tran=[]
-        low_tree_tran.push(Mat4.identity().times(Mat4.translation(2,0,10)))
+        low_tree_tran.push(Mat4.identity().times(Mat4.translation(22,0,10)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[0], this.materials.tree);
         
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(12,0,10)))
@@ -630,7 +624,7 @@ export class Project extends Scene {
         for(var i = 0; i < low_tree_tran.length; i++){
             tree_pos = low_tree_tran[i];
             let d = (player_pos[0][3] - tree_pos[0][3])**2 + (player_pos[2][3] - tree_pos[2][3])**2;
-            if(d < 5) {
+            if(d < 20) {
                 tree_blocked = true;
             }
         }
@@ -656,6 +650,17 @@ export class Project extends Scene {
                                                              // I just randomly chose my size of bullet
                 this.bullet_info[i][2].times(parabola.times((Mat4.rotation(Math.PI/3,1,0,0)).times((Mat4.scale(1.5,1,1.5))))),
                 this.materials.arrow);
+
+            //implementation of collision check with monsters
+            //--added by Jiexuan Fang
+            for(let j = 0; j< this.creature_info.length; j++) {
+                let distance = vec4(0, 0, 0, 1);
+                distance = this.bullet_info[i][2].minus(this.creature_info[j][2]
+                    .times(Mat4.translation(0,-2,0))).times(distance);
+                if (distance.norm() < 8) {
+                    this.creature_info.splice(j, 1);
+                }
+            }
         }
         // delete a bullet if it's fired certain amount of times ago, here I chose 5 sec
          while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 5){
@@ -771,15 +776,17 @@ class Ground extends Shape{
 
     draw_ground()
     {
-        for(var i=-70;i<70;i++)
-        {
-            for(var j=-70;j<70;j++)
-            {
-                defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
-            }
-            
-        }
-    }
+        // for(var i=-70;i<70;i++)
+        // {
+        //     for(var j=-70;j<70;j++)
+        //     {
+        //         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
+        //     }
+        //
+        // }
+        //just render one big scaled cube to make things faster.
+        defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(0,-5,0).times(Mat4.scale(140,0,140)))))
+     }
 
 }
 
@@ -830,34 +837,8 @@ class Check extends Shape{
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Gouraud_Shader extends Shader {
-    // This is a Shader using Phong_Shader as template
-    // TODO: Modify the glsl coder here to create a Gouraud Shader (Planet 2)
+
 
     constructor(num_lights = 2) {
         super();
