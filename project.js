@@ -663,9 +663,10 @@ export class Project extends Scene {
             //--added by Jiexuan Fang
             for(let j = 0; j< this.creature_info.length; j++) {
                 let distance = vec4(0, 0, 0, 1);
-                distance = this.bullet_info[i][2].minus(this.creature_info[j][2]
-                    .times(Mat4.translation(0,-5,0))).times(distance);
-                if (distance.norm() < 12) {
+                let distance1 = this.bullet_info[i][2].minus(this.creature_info[j][2]).times(distance);
+                let distance2 = this.bullet_info[i][2].minus(this.creature_info[j][2]
+                    .times(Mat4.translation(0,-2,0))).times(distance);
+                if (distance1.norm() < 10 || distance2.norm() < 10) {
                     this.creature_info.splice(j, 1);
                     this.bullet_info.splice(i,1);
                 }
@@ -680,7 +681,8 @@ export class Project extends Scene {
          if (this.spawning_creature){
             // creature_info : [init_time, speed, pos, chasing_player, min_chase_distance, max_chase_distance, facing_trans]
             // here I chose them to chase the player if player is whinin 40 units nearby
-            this.creature_info.push([t,1,Mat4.translation(0,0,0),true, 4, 40,Mat4.identity()]);
+            this.creature_info.push([t,1,Mat4.translation(0,-1,0).times(Mat4.scale(1.5,1.5,1.5)),
+                true, 4, 40,Mat4.identity()]);
             this.spawning_creature = false;
         }
         for (let i = 0; i< this.creature_info.length; i++){
