@@ -4,9 +4,12 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Texture,Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
+var arrow_angle=Mat4.identity()
+var in_arrow=Mat4.identity()
 var blocked =false;
 var tree_blocked = false;
 var mouse_x=0,mouse_y=0
+var move=true;
 // Camera coordinate system 
 let my_cam=Mat4.look_at(vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0));
 //test_cam is the current position of the camera
@@ -109,11 +112,47 @@ const Mouse_Picking = defs.Movement_Controls =
 
             this.key_triggered_button("Up", [" "], () => {this.thrust[1] = -6;}, undefined, () => {this.thrust[1] = 0;this.thrust[2] = 0});
             this.key_triggered_button("Forward", ["w"], () => {
-                        if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
+                if(!move)
+                {
+                    move=true
+                    this.matrix().post_multiply(Mat4.inverse(arrow_angle));
+                    this.inverse().pre_multiply(Mat4.inverse(in_arrow));
+                    arrow_angle=Mat4.identity()
+                    in_arrow=Mat4.identity()
+                }
+                
+                        if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => {this.thrust[2] = 0;this.thrust[1] = 0});
             this.new_line();
-            this.key_triggered_button("Left", ["a"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
-            this.key_triggered_button("Back", ["s"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
-            this.key_triggered_button("Right", ["d"], () => this.thrust[0] = -1, undefined, () => this.thrust[0] = 0);
+            this.key_triggered_button("Left", ["a"], () => {
+                if(!move)
+                {
+                    move=true
+                    this.matrix().post_multiply(Mat4.inverse(arrow_angle));
+                    this.inverse().pre_multiply(Mat4.inverse(in_arrow));
+                    arrow_angle=Mat4.identity()
+                    in_arrow=Mat4.identity()
+                }
+                this.thrust[0] = 1}, undefined, () => this.thrust[0] = 0);
+            this.key_triggered_button("Back", ["s"], () => {
+                if(!move)
+                {
+                    move=true
+                    this.matrix().post_multiply(Mat4.inverse(arrow_angle));
+                    this.inverse().pre_multiply(Mat4.inverse(in_arrow));
+                    arrow_angle=Mat4.identity()
+                    in_arrow=Mat4.identity()
+                }
+                this.thrust[2] = -1}, undefined, () => this.thrust[2] = 0);
+            this.key_triggered_button("Right", ["d"], () => {
+                if(!move)
+                {
+                    move=true
+                    this.matrix().post_multiply(Mat4.inverse(arrow_angle));
+                    this.inverse().pre_multiply(Mat4.inverse(in_arrow));
+                    arrow_angle=Mat4.identity()
+                    in_arrow=Mat4.identity()
+                }
+                this.thrust[0] = -1}, undefined, () => this.thrust[0] = 0);
             this.new_line();
             this.key_triggered_button("Down", ["z"], () => this.thrust[1] = 1, undefined, () => this.thrust[1] = 0);
 
@@ -124,12 +163,38 @@ const Mouse_Picking = defs.Movement_Controls =
             this.live_string(box => {
                 box.textContent = "Speed: " + this.speed_multiplier.toFixed(2)
             }, speed_controls);
-            this.key_triggered_button("+", ["p"], () =>
-                this.speed_multiplier *= 1.2, undefined, undefined, undefined, speed_controls);
+            // this.key_triggered_button("+", ["p"], () =>
+            //     this.speed_multiplier *= 1.2, undefined, undefined, undefined, speed_controls);
             this.new_line();
-            this.key_triggered_button("Roll left", [","], () => this.roll = 1, undefined, () => this.roll = 0);
-            this.key_triggered_button("Roll right", ["."], () => this.roll = -1, undefined, () => this.roll = 0);
-            this.new_line();
+            this.key_triggered_button("UP", ["i"], () => 
+            {
+                console.log("up!")
+                
+                move=false;
+                this.matrix().post_multiply(Mat4.inverse(arrow_angle));
+                    this.inverse().pre_multiply(Mat4.inverse(in_arrow));
+                    in_arrow=in_arrow.times(Mat4.rotation(-Math.PI/150,1,0,0));
+                arrow_angle=arrow_angle.times(Mat4.rotation(Math.PI/150,1,0,0));
+                this.matrix().post_multiply((arrow_angle));
+                this.inverse().pre_multiply((in_arrow));
+
+            }, undefined, () => {});
+            this.key_triggered_button("DOWN", ["k"], () => 
+            {
+                console.log("down!")
+                move=false;
+                
+                this.matrix().post_multiply(Mat4.inverse(arrow_angle));
+                this.inverse().pre_multiply(Mat4.inverse(in_arrow));
+
+                in_arrow=in_arrow.times(Mat4.rotation(-Math.PI/150,-1,0,0));
+                arrow_angle=arrow_angle.times(Mat4.rotation(Math.PI/150,-1,0,0));
+                this.matrix().post_multiply((arrow_angle));
+                this.inverse().pre_multiply((in_arrow));
+        
+            }, undefined, () => {});
+            // this.key_triggered_button("Roll right", ["."], () => this.roll = -1, undefined, () => this.roll = 0);
+            // this.new_line();
             //this.key_triggered_button("(Un)freeze mouse look around", ["f"], () => this.look_around_locked ^= 1, "#8B8885");
             this.new_line();
             this.key_triggered_button("Go to world origin", ["r"], () => {
@@ -213,8 +278,9 @@ const Mouse_Picking = defs.Movement_Controls =
 
         third_person_arcball(radians_per_frame) {
 
-
-            let dragging_vector = vec(mouse_x, mouse_y).times(25);
+            if(move)
+            {
+                let dragging_vector = vec(mouse_x, mouse_y).times(25);
 
             mouse_x = mouse_y = 0;
 
@@ -232,21 +298,26 @@ const Mouse_Picking = defs.Movement_Controls =
             };
 
             for (let i = 0; i < 2; i+=2) {                                     // The &&'s in the next line might zero the vectors out:
-            let o = offsets_from_dead_box,
-                velocity = ((o.minus[i] > 0 && o.minus[i]) || (o.plus[i] < 0 && o.plus[i])) * radians_per_frame;
-            // On X step, rotate around Y axis, and vice versa.
-            // if(i===1)
-            // {
-            //     blocked=true;
-            // }
-            console.log(this.matrix())
-            this.matrix().post_multiply(Mat4.rotation(-velocity, i, 1 - i, 0));
-            this.inverse().pre_multiply(Mat4.rotation(+velocity, i, 1 - i, 0));
-        }
-        test_cam=this.inverse()
-        //console.log("test:",test_cam)
-        my_cam=this.pos;
+                let o = offsets_from_dead_box,
+                    velocity = ((o.minus[i] > 0 && o.minus[i]) || (o.plus[i] < 0 && o.plus[i])) * radians_per_frame;
+                // On X step, rotate around Y axis, and vice versa.
+                // if(i===1)
+                // {
+                //     blocked=true;
+                // }
+                console.log(this.matrix())
+                // if(this.matrix()[0][0]<0.5&&this.matrix()[1][1]<0.5&&this.matrix()[2][2]<0.5)
+                //     return;
+                this.matrix().post_multiply(Mat4.rotation(-velocity, i, 1 - i, 0));
+                this.inverse().pre_multiply(Mat4.rotation(+velocity, i, 1 - i, 0));
+            }
+        
         //console.log(my_cam)
+            }
+            test_cam=this.inverse()
+            //console.log("test:",test_cam)
+            my_cam=this.pos;
+            
           
 
         }
