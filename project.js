@@ -8,9 +8,16 @@ var arrow_angle=Mat4.identity()
 var in_arrow=Mat4.identity()
 var blocked =false;
 var tree_blocked = false;
+//<<<<<<< HEAD
 var mouse_x=0,mouse_y=0
 var move=true;
+var forward = false, backward = false;
 // Camera coordinate system 
+// =======
+// var mouse_x=0,mouse_y=0;
+// var forward = false, backward = false;
+// // Camera coordinate system
+// >>>>>>> 246aa6b410fde2c57cd0812c608c21b0fbda8cf4
 let my_cam=Mat4.look_at(vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0));
 //test_cam is the current position of the camera
 let test_cam=Mat4.identity();
@@ -57,8 +64,8 @@ const Mouse_Picking = defs.Movement_Controls =
             this.mouse = {"from_center": vec(0, 0)};
             const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
                 vec(e.clientX - (rect.left + rect.right) / 2, e.clientY - (rect.bottom + rect.top) / 2);
-           
-           
+
+
                 // Set up mouse response.  The last one stops us from reacting if the mouse leaves the canvas:
             document.addEventListener("mouseup", e => {
                 this.mouse.anchor = undefined;
@@ -96,7 +103,7 @@ const Mouse_Picking = defs.Movement_Controls =
             // buttons with key bindings for affecting this scene, and live info readouts.
             this.control_panel.innerHTML += "Click and drag the scene to spin your viewpoint around it.<br>";
             this.live_string(box => box.textContent = "- Position: " + Mat4.inverse(test_cam)[0][3].toFixed(2)
-            + "  " +Mat4.inverse(test_cam)[1][3].toFixed(2) 
+            + "  " +Mat4.inverse(test_cam)[1][3].toFixed(2)
             + "  " +Mat4.inverse(test_cam)[2][3].toFixed(2) + " blocked:" + blocked
                 + "   " + "tree_blocked: " + tree_blocked);
 
@@ -111,6 +118,7 @@ const Mouse_Picking = defs.Movement_Controls =
             this.new_line();
 
             this.key_triggered_button("Up", [" "], () => {this.thrust[1] = -6;}, undefined, () => {this.thrust[1] = 0;this.thrust[2] = 0});
+//<<<<<<< HEAD
             this.key_triggered_button("Forward", ["w"], () => {
                 if(!move)
                 {
@@ -120,8 +128,10 @@ const Mouse_Picking = defs.Movement_Controls =
                     arrow_angle=Mat4.identity()
                     in_arrow=Mat4.identity()
                 }
-                
-                        if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => {this.thrust[2] = 0;this.thrust[1] = 0});
+                        forward = true
+                        //if(!blocked && !tree_blocked){this.thrust[2] = 1}
+                    }, undefined, () => forward = false//{this.thrust[2] = 0;this.thrust[1] = 0}
+                    );
             this.new_line();
             this.key_triggered_button("Left", ["a"], () => {
                 if(!move)
@@ -142,7 +152,10 @@ const Mouse_Picking = defs.Movement_Controls =
                     arrow_angle=Mat4.identity()
                     in_arrow=Mat4.identity()
                 }
-                this.thrust[2] = -1}, undefined, () => this.thrust[2] = 0);
+                backward = true
+                //this.thrust[2] = -1
+            }, undefined, () => backward = false//this.thrust[2] = 0
+            );
             this.key_triggered_button("Right", ["d"], () => {
                 if(!move)
                 {
@@ -153,6 +166,15 @@ const Mouse_Picking = defs.Movement_Controls =
                     in_arrow=Mat4.identity()
                 }
                 this.thrust[0] = -1}, undefined, () => this.thrust[0] = 0);
+// =======
+//             this.key_triggered_button("Forward", ["w"], () => {forward = true}, undefined, () => forward = false)
+
+//                        // if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
+//             this.new_line();
+//             this.key_triggered_button("Left", ["a"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
+//             this.key_triggered_button("Back", ["s"], () => backward = true, undefined, () => backward = false);
+//             this.key_triggered_button("Right", ["d"], () => this.thrust[0] = -1, undefined, () => this.thrust[0] = 0);
+// >>>>>>> 246aa6b410fde2c57cd0812c608c21b0fbda8cf4
             this.new_line();
             this.key_triggered_button("Down", ["z"], () => this.thrust[1] = 1, undefined, () => this.thrust[1] = 0);
 
@@ -240,13 +262,13 @@ const Mouse_Picking = defs.Movement_Controls =
             if (!this.look_around_locked)
                 // If steering, steer according to "mouse_from_center" vector, but don't
                 // start increasing until outside a leeway window from the center.
-                for (let i = 0; i < 2; i++) 
+                for (let i = 0; i < 2; i++)
                 {                                     // The &&'s in the next line might zero the vectors out:
                     let o = offsets_from_dead_box,
                         velocity = ((o.minus[i] > 0 && o.minus[i]) || (o.plus[i] < 0 && o.plus[i])) * radians_per_frame;
                     // On X step, rotate around Y axis, and vice versa.
                     this.matrix().post_multiply(Mat4.rotation(-velocity, i, 1 - i, 0));
-                    
+
                     this.inverse().pre_multiply(Mat4.rotation(+velocity, i, 1 - i, 0));
                 }
             this.matrix().post_multiply(Mat4.rotation(-.1 * this.roll, 0, 0, 1));
@@ -261,12 +283,12 @@ const Mouse_Picking = defs.Movement_Controls =
             if(this.thrust[1]===-6)
             {
                 this.thrust[1]=0
-                setTimeout(() => { 
+                setTimeout(() => {
                     this.thrust[1]=6
                     this.matrix().post_multiply(Mat4.translation(...this.thrust.times(-meters_per_frame)));
                     this.inverse().pre_multiply(Mat4.translation(...this.thrust.times(+meters_per_frame)));
                     this.thrust[1]=0;
-                }, 120)                 
+                }, 120)
             }
 
             let new_pos = Mat4.inverse(test_cam);
@@ -319,12 +341,18 @@ const Mouse_Picking = defs.Movement_Controls =
             my_cam=this.pos;
             
           
-
         }
 
         display(context, graphics_state, dt = graphics_state.animation_delta_time / 1000) {
             // The whole process of acting upon controls begins here.
-            
+            //update thrust according to the state of the game.
+            if(!blocked && !tree_blocked && forward)
+                this.thrust[2] = 1;
+            else if (backward)
+                this.thrust[2] = -1;
+            else
+                this.thrust[2] = 0;
+
             const m = this.speed_multiplier * this.meters_per_frame,
                 r = this.speed_multiplier * this.radians_per_frame;
 
@@ -348,7 +376,7 @@ const Mouse_Picking = defs.Movement_Controls =
         }
     }
 
-    
+
 export class Shape_From_File extends Shape {                                   // **Shape_From_File** is a versatile standalone Shape that imports
                                                                                // all its arrays' data from an .obj 3D model file.
     constructor(filename) {
@@ -458,7 +486,7 @@ export class Shape_From_File extends Shape {                                   /
 
 
 
-    
+
 const {Cube, Axis_Arrows, Textured_Phong} = defs
 export class Project extends Scene {
     constructor() {
@@ -476,7 +504,7 @@ export class Project extends Scene {
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 15),
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
-            //        (Requirement 1)   
+            //        (Requirement 1)
             sun: new defs.Subdivision_Sphere(4),
             planet_1: new defs.Subdivision_Sphere(4),
             map: new Ground(),
@@ -511,45 +539,45 @@ export class Project extends Scene {
             day_sky_text: new Material(new Texture_Scroll_X(), {
                 color: hex_color("#000000"),
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/sky_t2.jpg") 
+                texture: new Texture("assets/sky_t2.jpg")
             }),
             night_sky_text: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/star_t.jpg") 
+                texture: new Texture("assets/star_t.jpg")
             }),
             fence: new Material(new Textured_Phong(), {
                 color: hex_color("#a64a2b"),
                 ambient: .1, diffusivity: 1, specularity: 0.5,
-                //texture: new Texture("assets/fence_text.jpg") 
+                //texture: new Texture("assets/fence_text.jpg")
             }),
             bow: new Material(new Textured_Phong(), {
                 color: hex_color("#a64a2b"),
                 ambient: .1, diffusivity: .1, specularity: 1,
-                //texture: new Texture("assets/fence_text.jpg") 
-            }), 
+                //texture: new Texture("assets/fence_text.jpg")
+            }),
             tree: new Material(new Textured_Phong(), {
                 color: hex_color("#00b300"),
                 ambient: .1, diffusivity: 1, specularity: 0.5,
-                //texture: new Texture("assets/fence_text.jpg") 
+                //texture: new Texture("assets/fence_text.jpg")
             }),
             monster: new Material(new Textured_Phong(), {
                 //color: hex_color("#000000"),
                 ambient: .1, diffusivity: 1, specularity: 0.5,
-                //texture: new Texture("assets/fence_text.jpg") 
+                //texture: new Texture("assets/fence_text.jpg")
             }),
             Zealot: new Material(new Textured_Phong(), {
                 color: hex_color("#6a0dad"),
                 ambient: .1, diffusivity: 1, specularity: 0.5,
-                texture: new Texture("assets/Zealot_emissive.png") 
+                texture: new Texture("assets/Zealot_emissive.png")
             }),
             arrow: new Material(new Textured_Phong(), {
                 color: hex_color("#a64a2b"),
                 ambient: .1, diffusivity: 0, specularity: .5,
-                //texture: new Texture("assets/fence_text.jpg") 
+                //texture: new Texture("assets/fence_text.jpg")
             }),
 
-            
+
         }
         this.draw_bullet=true;
         this.creating_bullet = false;
@@ -593,27 +621,27 @@ export class Project extends Scene {
 
         let sun_tran=Mat4.identity().times(Mat4.rotation(t/5  , 0, 0, 1))
         .times(Mat4.translation(100, 0, 1))
-        .times(Mat4.scale(5,5,5)) 
+        .times(Mat4.scale(5,5,5))
         var light_position = vec4(sun_tran[0][3], sun_tran[1][3], sun_tran[2][3], 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 100000)];
 
 
-        
-  
-        
-        
+
+
+
+
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity()
 
         //the sun is roating around the z axis
-        
+
 
         //transformation for the sky
         let sky_cover = Mat4.identity()
                     //.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
                     .times(Mat4.scale(300,300,250))
                     .times(Mat4.rotation(t/20  , 1, 0, 1));
-       
+
         this.shapes.sun.draw(context, program_state, sun_tran, this.materials.sun);
 
         //sunset change the lighting
@@ -627,10 +655,9 @@ export class Project extends Scene {
         }
         else
         {
-            //locked=false;
+            //blocked=false;
             program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
             this.shapes.sky.draw(context, program_state, sky_cover, this.materials.day_sky_text);
-
         }
 
 
@@ -644,40 +671,40 @@ export class Project extends Scene {
         let low_tree_tran=[]
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(22,0,10)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[0], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(12,0,10)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[1], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(12,0,-33)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[2], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(36,0,22)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[3], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(16,0,14)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[4], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(-23,0,26)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[5], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(-12,0,20)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[6], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(-49,0,-20)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[7], this.materials.tree);
 
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(49,0,50)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[8], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(59,0,-20)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[9], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(35,0,-23)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[10], this.materials.tree);
-        
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(57,0,21)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[11], this.materials.tree);
-       
+
         low_tree_tran.push(Mat4.identity().times(Mat4.translation(46,0,30)))
         this.shapes.low_tree.draw(context, program_state, low_tree_tran[12], this.materials.tree);
 
@@ -694,7 +721,7 @@ export class Project extends Scene {
         }
         // let monster_tran = Mat4.identity().times(Mat4.translation(30,0,10))
         // this.shapes.monster.draw(context, program_state, monster_tran, this.materials.Zealot);
-        
+
         //  monster_tran = monster_tran.times(Mat4.translation(30,0,10)).times(Mat4.scale(30,0,10))
         // this.shapes.arrow.draw(context, program_state, monster_tran, this.materials.arrow);
 
@@ -727,8 +754,8 @@ export class Project extends Scene {
             for(let j = 0; j< this.creature_info.length; j++) {
                 let distance = vec4(0, 0, 0, 1);
                 distance = this.bullet_info[i][2].minus(this.creature_info[j][2]
-                    .times(Mat4.translation(0,-2,0))).times(distance);
-                if (distance.norm() < 8) {
+                    .times(Mat4.translation(0,-5,0))).times(distance);
+                if (distance.norm() < 12) {
                     this.creature_info.splice(j, 1);
                     this.bullet_info.splice(i,1);
                 }
@@ -806,12 +833,12 @@ export class Project extends Scene {
             this.shapes.fence.draw(context, program_state, fence_tranl, this.materials.fence);
 
         }
-        
+
 
 
 
         // object follows the camera
-        
+
         let left=Mat4.inverse(test_cam)
         let right =Mat4.inverse(test_cam)
         let desired=Mat4.inverse(test_cam)
@@ -828,7 +855,7 @@ export class Project extends Scene {
         this.shapes.bow.draw(context, program_state, right, this.materials.bow);
 
 
-    
+
     }
 
 
@@ -851,7 +878,7 @@ class Ground extends Shape{
             {
                 defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(4*i,-5,4*j).times(Mat4.scale(4,1,4)))));
             }
-        
+
         }
         //just render one big scaled cube to make things faster.
         //defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(0,-5,0).times(Mat4.scale(140,0,140)))))
@@ -872,7 +899,7 @@ class Crosshair extends Shape{
         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(0,2,2).times(Mat4.scale(0.1,1,0.1)))));
         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(2,0,2).times(Mat4.scale(0.1,1,0.1)))));
         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(0,-2,2).times(Mat4.scale(0.1,1,0.1)))));
-       
+
     }
 
 }
@@ -916,7 +943,7 @@ class Gouraud_Shader extends Shader {
 
     shared_glsl_code() {
         // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
-        return ` 
+        return `
         precision mediump float;
         const int N_LIGHTS = ` + this.num_lights + `;
         uniform float ambient, diffusivity, specularity, smoothness;
@@ -929,20 +956,20 @@ class Gouraud_Shader extends Shader {
         // on to the next phase (fragment shader), then interpolated per-fragment, weighted by the
         // pixel fragment's proximity to each of the 3 vertices (barycentric interpolation).
         varying vec3 N, vertex_worldspace;
-        // ***** PHONG SHADING HAPPENS HERE: *****                                       
-        vec3 phong_model_lights( vec3 N, vec3 vertex_worldspace ){                                        
+        // ***** PHONG SHADING HAPPENS HERE: *****
+        vec3 phong_model_lights( vec3 N, vec3 vertex_worldspace ){
             // phong_model_lights():  Add up the lights' contributions.
             vec3 E = normalize( camera_center - vertex_worldspace );
             vec3 result = vec3( 0.0 );
             for(int i = 0; i < N_LIGHTS; i++){
-                // Lights store homogeneous coords - either a position or vector.  If w is 0, the 
-                // light will appear directional (uniform direction from all points), and we 
+                // Lights store homogeneous coords - either a position or vector.  If w is 0, the
+                // light will appear directional (uniform direction from all points), and we
                 // simply obtain a vector towards the light by directly using the stored value.
-                // Otherwise if w is 1 it will appear as a point light -- compute the vector to 
-                // the point light's location from the current surface point.  In either case, 
-                // fade (attenuate) the light as the vector needed to reach it gets longer.  
-                vec3 surface_to_light_vector = light_positions_or_vectors[i].xyz - 
-                                               light_positions_or_vectors[i].w * vertex_worldspace;                                             
+                // Otherwise if w is 1 it will appear as a point light -- compute the vector to
+                // the point light's location from the current surface point.  In either case,
+                // fade (attenuate) the light as the vector needed to reach it gets longer.
+                vec3 surface_to_light_vector = light_positions_or_vectors[i].xyz -
+                                               light_positions_or_vectors[i].w * vertex_worldspace;
                 float distance_to_light = length( surface_to_light_vector );
 
                 vec3 L = normalize( surface_to_light_vector );
@@ -952,7 +979,7 @@ class Gouraud_Shader extends Shader {
                 float diffuse  =      max( dot( N, L ), 0.0 );
                 float specular = pow( max( dot( N, H ), 0.0 ), smoothness );
                 float attenuation = 1.0 / (1.0 + light_attenuation_factors[i] * distance_to_light * distance_to_light );
-                
+
                 vec3 light_contribution = shape_color.xyz * light_colors[i].xyz * diffusivity * diffuse
                                                           + light_colors[i].xyz * specularity * specular;
                 result += attenuation * light_contribution;
@@ -964,13 +991,13 @@ class Gouraud_Shader extends Shader {
     vertex_glsl_code() {
         // ********* VERTEX SHADER *********
         return this.shared_glsl_code() + `
-            attribute vec3 position, normal;                            
+            attribute vec3 position, normal;
             // Position is expressed in object coordinates.
-            
+
             uniform mat4 model_transform;
             uniform mat4 projection_camera_model_transform;
-    
-            void main(){                                                                   
+
+            void main(){
                 // The vertex's final resting place (in NDCS):
                 gl_Position = projection_camera_model_transform * vec4( position, 1.0 );
                 // The final normal vector in screen space.
@@ -984,7 +1011,7 @@ class Gouraud_Shader extends Shader {
         // A fragment is a pixel that's overlapped by the current triangle.
         // Fragments affect the final image or get discarded due to depth.
         return this.shared_glsl_code() + `
-            void main(){                                                           
+            void main(){
                 // Compute an initial (ambient) color:
                 gl_FragColor = vec4( shape_color.xyz * ambient, shape_color.w );
                 // Compute the final color with contributions from lights:
@@ -1076,9 +1103,9 @@ class Ring_Shader extends Shader {
         attribute vec3 position;
         uniform mat4 model_transform;
         uniform mat4 projection_camera_model_transform;
-        
+
         void main(){
-          
+
         }`;
     }
 
@@ -1087,7 +1114,7 @@ class Ring_Shader extends Shader {
         // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
         return this.shared_glsl_code() + `
         void main(){
-          
+
         }`;
     }
 }
@@ -1100,16 +1127,16 @@ class Texture_Scroll_X extends Textured_Phong {
             varying vec2 f_tex_coord;
             uniform sampler2D texture;
             uniform float animation_time;
-            
+
             void main(){
                 // Sample the texture image in the correct place:
                 vec2 f_tex_new=f_tex_coord;
                 f_tex_new.x=f_tex_new.x - 2.0*animation_time;
                 vec4 tex_color = texture2D( texture, f_tex_new);
-                
+
                 if( tex_color.w < .01 ) discard;
                                                                          // Compute an initial (ambient) color:
-                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w );
                                                                          // Compute the final color with contributions from lights:
                 gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
         } `;
