@@ -93,7 +93,8 @@ const Mouse_Picking = defs.Movement_Controls =
             // buttons with key bindings for affecting this scene, and live info readouts.
             this.control_panel.innerHTML += "Click and drag the scene to spin your viewpoint around it.<br>";
             this.live_string(box => box.textContent = "- Position: " + Mat4.inverse(test_cam)[0][3].toFixed(2)
-                + "  " +Mat4.inverse(test_cam)[2][3].toFixed(2) + "blocked:" + blocked
+            + "  " +Mat4.inverse(test_cam)[1][3].toFixed(2) 
+            + "  " +Mat4.inverse(test_cam)[2][3].toFixed(2) + " blocked:" + blocked
                 + "   " + "tree_blocked: " + tree_blocked);
 
             this.new_line();
@@ -200,20 +201,7 @@ const Mouse_Picking = defs.Movement_Controls =
                     this.matrix().post_multiply(Mat4.translation(...this.thrust.times(-meters_per_frame)));
                     this.inverse().pre_multiply(Mat4.translation(...this.thrust.times(+meters_per_frame)));
                     this.thrust[1]=0;
-                }, 120)
-                
-        //         setTimeout(() => {   
-        //             this.thrust[1]=0
-        //             this.matrix().post_multiply(Mat4.translation(...this.thrust.times(-meters_per_frame)));
-        //             this.inverse().pre_multiply(Mat4.translation(...this.thrust.times(+meters_per_frame)));
-        //             console.log("hello",this.matrix(),this.inverse())
-        // }, 50 );
-                
-                // console.log("up\n\n")
-                // this.matrix().post_multiply(Mat4.translation(...this.thrust.times(-meters_per_frame)));
-                // this.inverse().pre_multiply(Mat4.translation(...this.thrust.times(+meters_per_frame)));
-                
-                 
+                }, 120)                 
             }
 
             let new_pos = Mat4.inverse(test_cam);
@@ -247,6 +235,11 @@ const Mouse_Picking = defs.Movement_Controls =
             let o = offsets_from_dead_box,
                 velocity = ((o.minus[i] > 0 && o.minus[i]) || (o.plus[i] < 0 && o.plus[i])) * radians_per_frame;
             // On X step, rotate around Y axis, and vice versa.
+            // if(i===1)
+            // {
+            //     blocked=true;
+            // }
+            console.log(this.matrix())
             this.matrix().post_multiply(Mat4.rotation(-velocity, i, 1 - i, 0));
             this.inverse().pre_multiply(Mat4.rotation(+velocity, i, 1 - i, 0));
         }
@@ -444,7 +437,7 @@ export class Project extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/grass_t.jpg")
             }),
-            day_sky_text: new Material(new Textured_Phong(), {
+            day_sky_text: new Material(new Texture_Scroll_X(), {
                 color: hex_color("#000000"),
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/sky_t2.jpg") 
@@ -638,19 +631,26 @@ export class Project extends Scene {
         // Draw bullet-- added by Wei Du
         if (this.creating_bullet){
             // bullet_info : [init_time, init_speed, init_pos, gravity]
-            this.bullet_info.push([t,3,Mat4.inverse(test_cam),0.098]);
+            this.bullet_info.push([t,10,Mat4.inverse(test_cam),0.049]);
             this.creating_bullet = false;
         }
         for (let i = 0; i< this.bullet_info.length; i++){
             let parabola = Mat4.translation(0,
                 this.bullet_info[i][3]*(t-this.bullet_info[i][0])*(-t+this.bullet_info[i][0]),
                 -5+this.bullet_info[i][1]*(-t+this.bullet_info[i][0]));
-
+            let tilt_head = vec3 (0,
+                2*this.bullet_info[i][3]*(t-this.bullet_info[i][0]),
+                this.bullet_info[i][1]);
+            tilt_head = tilt_head.normalized();
+            let tilt_trans = Matrix.of(
+                [ 1, 0, 0, 0],
+                [ 0, tilt_head[1], -tilt_head[2], 0],
+                [0, tilt_head[2], tilt_head[1], 0],
+                [ 0, 0, 0, 1]
+            );
             this.shapes.arrow.draw(context, program_state,
-                                                             // I just randomly chose my size of bullet
-                this.bullet_info[i][2].times(parabola.times((Mat4.rotation(Math.PI/3,1,0,0)).times((Mat4.scale(1.5,1,1.5))))),
+                this.bullet_info[i][2].times(parabola.times((tilt_trans).times((Mat4.scale(1.5,1,1.5))))),
                 this.materials.arrow);
-
             //implementation of collision check with monsters
             //--added by Jiexuan Fang
             for(let j = 0; j< this.creature_info.length; j++) {
@@ -664,10 +664,7 @@ export class Project extends Scene {
             }
         }
         // delete a bullet if it's fired certain amount of times ago, here I chose 5 sec
-         while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 5){
-            this.bullet_info.shift();
-        }
-        // end of Draw bullet-- added by Wei Du
+        while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 5){ this.bullet_info.shift();}
 
 
 
@@ -777,16 +774,16 @@ class Ground extends Shape{
 
     draw_ground()
     {
-        // for(var i=-70;i<70;i++)
-        // {
-        //     for(var j=-70;j<70;j++)
-        //     {
-        //         defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(i,-5,j))));
-        //     }
-        //
-        // }
+        for(var i=-17;i<18;i++)
+        {
+            for(var j=-17;j<18;j++)
+            {
+                defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(4*i,-5,4*j).times(Mat4.scale(4,1,4)))));
+            }
+        
+        }
         //just render one big scaled cube to make things faster.
-        defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(0,-5,0).times(Mat4.scale(140,0,140)))))
+        //defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(0,-5,0).times(Mat4.scale(140,0,140)))))
      }
 
 }
@@ -1024,3 +1021,26 @@ class Ring_Shader extends Shader {
     }
 }
 
+
+class Texture_Scroll_X extends Textured_Phong {
+    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #6.
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            
+            void main(){
+                // Sample the texture image in the correct place:
+                vec2 f_tex_new=f_tex_coord;
+                f_tex_new.x=f_tex_new.x - 2.0*animation_time;
+                vec4 tex_color = texture2D( texture, f_tex_new);
+                
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
+    }
+}
