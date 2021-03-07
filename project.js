@@ -746,6 +746,7 @@ export class Project extends Scene {
                 [0, tilt_head[2], tilt_head[1], 0],
                 [ 0, 0, 0, 1]
             );
+            let bullet_trans =  this.bullet_info[i][2].times(parabola.times((tilt_trans).times((Mat4.scale(1.5,1,1.5)))))
             this.shapes.arrow.draw(context, program_state,
                 this.bullet_info[i][2].times(parabola.times((tilt_trans).times((Mat4.scale(1.5,1,1.5))))),
                 this.materials.arrow);
@@ -753,10 +754,10 @@ export class Project extends Scene {
             //--added by Jiexuan Fang
             for(let j = 0; j< this.creature_info.length; j++) {
                 let distance = vec4(0, 0, 0, 1);
-                let distance1 = this.bullet_info[i][2].minus(this.creature_info[j][2]).times(distance);
-                let distance2 = this.bullet_info[i][2].minus(this.creature_info[j][2]
-                    .times(Mat4.translation(0,-2,0))).times(distance);
-                if (distance1.norm() < 10 || distance2.norm() < 10) {
+                let distance1 = bullet_trans.minus(this.creature_info[j][2]).times(distance);
+              //  distance1 = distance1.normalized();
+               // let distance_xz = distance1[0];
+                if (distance1.norm() < 3) {
                     this.creature_info.splice(j, 1);
                     this.bullet_info.splice(i,1);
                 }
