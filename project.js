@@ -6,7 +6,8 @@ const {
 
 var blocked =false;
 var tree_blocked = false;
-var mouse_x=0,mouse_y=0
+var mouse_x=0,mouse_y=0;
+var forward = false, backward = false;
 // Camera coordinate system 
 let my_cam=Mat4.look_at(vec3(0, 0, 0), vec3(0, 0, -1), vec3(0, 1, 0));
 //test_cam is the current position of the camera
@@ -107,11 +108,12 @@ const Mouse_Picking = defs.Movement_Controls =
             this.new_line();
 
             this.key_triggered_button("Up", [" "], () => {this.thrust[1] = -6;}, undefined, () => {this.thrust[1] = 0;this.thrust[2] = 0});
-            this.key_triggered_button("Forward", ["w"], () => {
-                        if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
+            this.key_triggered_button("Forward", ["w"], () => {forward = true}, undefined, () => forward = false)
+
+                       // if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
             this.new_line();
             this.key_triggered_button("Left", ["a"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
-            this.key_triggered_button("Back", ["s"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
+            this.key_triggered_button("Back", ["s"], () => backward = true, undefined, () => backward = false);
             this.key_triggered_button("Right", ["d"], () => this.thrust[0] = -1, undefined, () => this.thrust[0] = 0);
             this.new_line();
             this.key_triggered_button("Down", ["z"], () => this.thrust[1] = 1, undefined, () => this.thrust[1] = 0);
@@ -260,7 +262,14 @@ const Mouse_Picking = defs.Movement_Controls =
 
         display(context, graphics_state, dt = graphics_state.animation_delta_time / 1000) {
             // The whole process of acting upon controls begins here.
-            
+            //update thrust according to the state of the game.
+            if(!blocked && !tree_blocked && forward)
+                this.thrust[2] = 1;
+            else if (backward)
+                this.thrust[2] = -1;
+            else
+                this.thrust[2] = 0;
+
             const m = this.speed_multiplier * this.meters_per_frame,
                 r = this.speed_multiplier * this.radians_per_frame;
 
@@ -563,10 +572,9 @@ export class Project extends Scene {
         }
         else
         {
-            //locked=false;
+            //blocked=false;
             program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
             this.shapes.sky.draw(context, program_state, sky_cover, this.materials.day_sky_text);
-
         }
 
 
@@ -638,7 +646,7 @@ export class Project extends Scene {
         // Draw bullet-- added by Wei Du
         if (this.creating_bullet){
             // bullet_info : [init_time, init_speed, init_pos, gravity]
-            this.bullet_info.push([t,3,Mat4.inverse(test_cam),0.098]);
+            this.bullet_info.push([t,30,Mat4.inverse(test_cam),0.98]);
             this.creating_bullet = false;
         }
         for (let i = 0; i< this.bullet_info.length; i++){
