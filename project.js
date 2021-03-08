@@ -619,7 +619,7 @@ export class Project extends Scene {
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
-        let sun_tran=Mat4.identity().times(Mat4.rotation(t/5  , 0, 0, 1))
+        let sun_tran=Mat4.identity().times(Mat4.rotation(t/20  , 0, 0, 1))
         .times(Mat4.translation(100, 0, 1))
         .times(Mat4.scale(5,5,5))
         var light_position = vec4(sun_tran[0][3], sun_tran[1][3], sun_tran[2][3], 1);
@@ -647,15 +647,13 @@ export class Project extends Scene {
         //sunset change the lighting
         if(sun_tran[1][3]<-2)
         {
-            //blocked=true;
             console.log("sunset!")
-            program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1)];
-            this.shapes.sky.draw(context, program_state, sky_cover, this.materials.night_sky_text);
+            //program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1)];
+            //this.shapes.sky.draw(context, program_state, sky_cover, this.materials.night_sky_text);
 
         }
         else
         {
-            //blocked=false;
             program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
             this.shapes.sky.draw(context, program_state, sky_cover, this.materials.day_sky_text);
         }
@@ -728,16 +726,27 @@ export class Project extends Scene {
 
         // Draw bullet-- added by Wei Du
         if (this.creating_bullet){
-            // bullet_info : [init_time, init_speed, init_pos, gravity]
-            this.bullet_info.push([t,10,Mat4.inverse(test_cam),0.049]);
+            // bullet_info : [init_time, init_speed, init_pos, gravity, init_elevation_sin]
+            this.bullet_info.push([t,9,Mat4.inverse(test_cam),0.59,in_arrow[1][2]]);
             this.creating_bullet = false;
         }
         for (let i = 0; i< this.bullet_info.length; i++){
+            let translate = this.bullet_info[i][2].times(vec4(0,0,0,1));
+            let rot = this.bullet_info[i][2].times(vec4(1,0,0,0));
+            let ele = this.bullet_info[i][4];
+            let rotXZ = vec4(rot[0], 0,rot[2],0).normalized()
+            let init_pos_and_dire = Matrix.of(
+                [rotXZ[0],0,-rotXZ[2],translate[0]],
+                [0,1,0,translate[1]],
+                [rotXZ[2],0,rotXZ[0],translate[2]],
+                [0,0,0,1]
+            );
             let parabola = Mat4.translation(0,
-                this.bullet_info[i][3]*(t-this.bullet_info[i][0])*(-t+this.bullet_info[i][0]),
-                -5+this.bullet_info[i][1]*(-t+this.bullet_info[i][0]));
+                5*ele + ele*this.bullet_info[i][1]*(t-this.bullet_info[i][0]) + this.bullet_info[i][3]*(t-this.bullet_info[i][0])*(-t+this.bullet_info[i][0]),
+                -5*Math.sqrt(1-ele*ele)+(1-ele*ele)*this.bullet_info[i][1]*(-t+this.bullet_info[i][0]));
+            // tilt_head = dy / dz
             let tilt_head = vec3 (0,
-                2*this.bullet_info[i][3]*(t-this.bullet_info[i][0]),
+                -this.bullet_info[i][1]*ele/Math.sqrt(1-ele*ele)+2*this.bullet_info[i][3]*(t-this.bullet_info[i][0]),
                 this.bullet_info[i][1]);
             tilt_head = tilt_head.normalized();
             let tilt_trans = Matrix.of(
@@ -747,7 +756,7 @@ export class Project extends Scene {
                 [ 0, 0, 0, 1]
             );
             this.shapes.arrow.draw(context, program_state,
-                this.bullet_info[i][2].times(parabola.times((tilt_trans).times((Mat4.scale(1.5,1,1.5))))),
+                init_pos_and_dire.times(parabola.times((tilt_trans).times((Mat4.scale(1.5,1,1.5))))),
                 this.materials.arrow);
             //implementation of collision check with monsters
             //--added by Jiexuan Fang
@@ -761,8 +770,8 @@ export class Project extends Scene {
                 }
             }
         }
-        // delete a bullet if it's fired certain amount of times ago, here I chose 5 sec
-        while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 5){ this.bullet_info.shift();}
+        // delete a bullet if it's fired certain amount of times ago, here I chose 10 sec
+        while (this.bullet_info.length>0 && t-this.bullet_info[0][0] > 10){ this.bullet_info.shift();}
 
 
 
