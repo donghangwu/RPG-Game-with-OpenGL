@@ -101,11 +101,11 @@ const Mouse_Picking = defs.Movement_Controls =
         make_control_panel() {
             // make_control_panel(): Sets up a panel of interactive HTML elements, including
             // buttons with key bindings for affecting this scene, and live info readouts.
-            this.control_panel.innerHTML += "Click and drag the scene to spin your viewpoint around it.<br>";
+            this.control_panel.innerHTML += "";
             this.live_string(box => box.textContent = "- Position: " + Mat4.inverse(test_cam)[0][3].toFixed(2)
             + "  " +Mat4.inverse(test_cam)[1][3].toFixed(2)
-            + "  " +Mat4.inverse(test_cam)[2][3].toFixed(2) + " blocked:" + blocked
-                + "   " + "tree_blocked: " + tree_blocked);
+            + "  " +Mat4.inverse(test_cam)[2][3].toFixed(2)); //+ " blocked:" + blocked
+               // + "   " + "tree_blocked: " + tree_blocked);
 
             this.new_line();
             // The facing directions are surprisingly affected by the left hand rule:
@@ -166,27 +166,12 @@ const Mouse_Picking = defs.Movement_Controls =
                     in_arrow=Mat4.identity()
                 }
                 this.thrust[0] = -1}, undefined, () => this.thrust[0] = 0);
-// =======
-//             this.key_triggered_button("Forward", ["w"], () => {forward = true}, undefined, () => forward = false)
 
-//                        // if(!blocked && !tree_blocked){this.thrust[2] = 1}}, undefined, () => this.thrust[2] = 0);
-//             this.new_line();
-//             this.key_triggered_button("Left", ["a"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
-//             this.key_triggered_button("Back", ["s"], () => backward = true, undefined, () => backward = false);
-//             this.key_triggered_button("Right", ["d"], () => this.thrust[0] = -1, undefined, () => this.thrust[0] = 0);
-// >>>>>>> 246aa6b410fde2c57cd0812c608c21b0fbda8cf4
             this.new_line();
             this.key_triggered_button("Down", ["z"], () => this.thrust[1] = 1, undefined, () => this.thrust[1] = 0);
 
             const speed_controls = this.control_panel.appendChild(document.createElement("span"));
             speed_controls.style.margin = "30px";
-            this.key_triggered_button("-", ["o"], () =>
-                this.speed_multiplier /= 1.2, undefined, undefined, undefined, speed_controls);
-            this.live_string(box => {
-                box.textContent = "Speed: " + this.speed_multiplier.toFixed(2)
-            }, speed_controls);
-            // this.key_triggered_button("+", ["p"], () =>
-            //     this.speed_multiplier *= 1.2, undefined, undefined, undefined, speed_controls);
             this.new_line();
             this.key_triggered_button("UP", ["i"], () => 
             {
@@ -583,6 +568,8 @@ export class Project extends Scene {
         this.creating_bullet = false;
         this.bullet_info = [];//added by Wei Du
         this.spawning_creature = true;//added by Wei Du : [init_time, , init_pos, gravity]
+        this.arrow_speed=40
+        this.gravity=9.5
         this.creature_info = [];//added by Wei Du
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 5, 0));
@@ -590,17 +577,42 @@ export class Project extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+        
+        this.new_line();
+        this.live_string(box => box.textContent = "- Arrow speed: "+this.arrow_speed+"- Gravity: "+this.gravity)
+        this.new_line();
+        this.new_line();
         this.key_triggered_button("Shoot", ["f"], () => {
             this.draw_bullet=true;
             this.creating_bullet = true;
-            console.log("shoot!\n\n")
+            //console.log("shoot!\n\n")
         });
         this.key_triggered_button("spawn monsters", ["c"], () => {
             this.spawning_creature=true;
 
-            console.log("creature spawned!\n\n")
+            //console.log("creature spawned!\n\n")
         });
         this.new_line();
+        this.key_triggered_button("Increase arrow speed", ["o"], () => {
+           this.arrow_speed+=1;
+            console.log("speed:",this.arrow_speed)
+        });
+        this.key_triggered_button("Decrease arrow speed", ["p"], () => {
+            this.arrow_speed-=1;
+             console.log("speed:",this.arrow_speed)
+         });
+        
+        this.new_line();
+        this.key_triggered_button("Increase gravity", ["["], () => {
+            this.gravity+=0.5;
+
+            console.log("gravity:",this.gravity)
+        });
+        this.key_triggered_button("Decrease gravity", ["]"], () => {
+            this.gravity-=0.5;
+
+            console.log("gravity:",this.gravity)
+        });
         this.new_line();
     }
 
@@ -647,9 +659,8 @@ export class Project extends Scene {
         //sunset change the lighting
         if(sun_tran[1][3]<-2)
         {
-            console.log("sunset!")
-            //program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1)];
-            //this.shapes.sky.draw(context, program_state, sky_cover, this.materials.night_sky_text);
+            program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1)];
+            this.shapes.sky.draw(context, program_state, sky_cover, this.materials.night_sky_text);
 
         }
         else
@@ -660,7 +671,7 @@ export class Project extends Scene {
 
 
 
-        this.shapes.sign.draw(context, program_state, model_transform, this.materials.map_text);
+        //this.shapes.sign.draw(context, program_state, model_transform, this.materials.map_text);
 
         //draw the ground
         this.shapes.map.draw(context, program_state, model_transform, this.materials.map_text);
@@ -727,7 +738,7 @@ export class Project extends Scene {
         // Draw bullet-- added by Wei Du
         if (this.creating_bullet){
             // bullet_info : [init_time, init_speed, init_pos, gravity, init_elevation_sin]
-            this.bullet_info.push([t,9,Mat4.inverse(test_cam),0.59,in_arrow[1][2]]);
+            this.bullet_info.push([t,this.arrow_speed,Mat4.inverse(test_cam),this.gravity,in_arrow[1][2]]);
             this.creating_bullet = false;
         }
         for (let i = 0; i< this.bullet_info.length; i++){
@@ -812,9 +823,9 @@ export class Project extends Scene {
                 this.materials.Zealot);
         }
         // de-spawn if it's created certain amount of times ago, here I chose 30 sec
-        while (this.creature_info.length>0 && t-this.creature_info[0][0] > 30){
-            this.creature_info.shift();
-        }
+        // while (this.creature_info.length>0 && t-this.creature_info[0][0] > 30){
+        //     this.creature_info.shift();
+        // }
 
         //fences
         for(var z=-70,l=-70,r=69;z<70;z++)
