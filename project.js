@@ -794,21 +794,33 @@ export class Project extends Scene {
             // creature_info : [init_time, speed, pos, chasing_player, min_chase_distance, max_chase_distance, facing_trans]
             // here I chose them to chase the player if player is whinin 40 units nearby
              let x_pos = 50*Math.random() + 10, z_pos = 30*Math.random() + 30;
-            this.creature_info.push([t,1,Mat4.translation(x_pos,-1,z_pos).times(Mat4.scale(1.5,1.5,1.5)),
+            this.creature_info.push([t,3,Mat4.translation(x_pos,-1,z_pos).times(Mat4.scale(1.5,1.5,1.5)),
                 true, 4, 40,Mat4.identity()]);
             this.spawning_creature = false;
         }
         for (let i = 0; i< this.creature_info.length; i++){
             let distance = vec4(0,0,0,1);
+            let blocked_by_tree = false;
             distance = Mat4.inverse(test_cam).minus(this.creature_info[i][2]).times(distance);
             if (this.creature_info[i][3]){
-                if (distance.norm() < this.creature_info[i][4]){
+                if (distance.norm() < this.creature_info[i][4]) {
                     dead = true;
                     window.alert("YOU DIED!");
                     location.reload();
+                    break;
                 }
 
-                if (distance.norm() > this.creature_info[i][4] && distance.norm() <= this.creature_info[i][5]){
+
+                //collision detection for trees
+                for(let j = 0; j < low_tree_tran.length; j++){
+                    tree_pos = low_tree_tran[j];
+                    let d = (this.creature_info[i][2][0][3] - tree_pos[0][3])**2 + (this.creature_info[i][2][2][3] - tree_pos[2][3])**2;
+                    if(d< 4){
+                        blocked_by_tree = true;
+                    }
+                }
+
+                if (distance.norm() > this.creature_info[i][4] && distance.norm() <= this.creature_info[i][5] && !blocked_by_tree){
                     distance = distance.normalized();
                     this.creature_info[i][2] =
                         Mat4.translation(
@@ -822,8 +834,8 @@ export class Project extends Scene {
                         [distance[2], 0, distance[0], 0],
                         [ 0, 0, 0, 1]
                     );
-
                 }
+
             }
             this.shapes.monster.draw(context, program_state,
                 Mat4.identity()
