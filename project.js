@@ -12,6 +12,7 @@ var tree_blocked = false;
 var mouse_x=0,mouse_y=0
 var move=true;
 var forward = false, backward = false;
+var dead = false;
 // Camera coordinate system 
 // =======
 // var mouse_x=0,mouse_y=0;
@@ -577,7 +578,7 @@ export class Project extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        
+
         this.new_line();
         this.live_string(box => box.textContent = "- Arrow speed: "+this.arrow_speed+"- Gravity: "+this.gravity)
         this.new_line();
@@ -601,7 +602,7 @@ export class Project extends Scene {
             this.arrow_speed-=1;
              console.log("speed:",this.arrow_speed)
          });
-        
+
         this.new_line();
         this.key_triggered_button("Increase gravity", ["["], () => {
             this.gravity+=0.5;
@@ -792,7 +793,8 @@ export class Project extends Scene {
          if (this.spawning_creature){
             // creature_info : [init_time, speed, pos, chasing_player, min_chase_distance, max_chase_distance, facing_trans]
             // here I chose them to chase the player if player is whinin 40 units nearby
-            this.creature_info.push([t,1,Mat4.translation(0,-1,0).times(Mat4.scale(1.5,1.5,1.5)),
+             let x_pos = 50*Math.random() + 10, z_pos = 30*Math.random() + 30;
+            this.creature_info.push([t,1,Mat4.translation(x_pos,-1,z_pos).times(Mat4.scale(1.5,1.5,1.5)),
                 true, 4, 40,Mat4.identity()]);
             this.spawning_creature = false;
         }
@@ -800,6 +802,12 @@ export class Project extends Scene {
             let distance = vec4(0,0,0,1);
             distance = Mat4.inverse(test_cam).minus(this.creature_info[i][2]).times(distance);
             if (this.creature_info[i][3]){
+                if (distance.norm() < this.creature_info[i][4]){
+                    dead = true;
+                    window.alert("YOU DIED!");
+                    location.reload();
+                }
+
                 if (distance.norm() > this.creature_info[i][4] && distance.norm() <= this.creature_info[i][5]){
                     distance = distance.normalized();
                     this.creature_info[i][2] =
