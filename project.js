@@ -638,11 +638,6 @@ export class Project extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 100000)];
 
 
-
-
-
-
-        const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity()
 
         //the sun is roating around the z axis
@@ -828,7 +823,7 @@ export class Project extends Scene {
         // }
 
         //fences
-        for(var z=-70,l=-70,r=69;z<70;z++)
+        for(var z=-70,l=-70,r=70;z<71;z++)
         {
             let fence_tranr = Mat4.identity()
             .times(Mat4.translation(l,-2.5,z))
@@ -843,7 +838,7 @@ export class Project extends Scene {
             this.shapes.fence.draw(context, program_state, fence_tranl, this.materials.fence);
 
         }
-        for(var i=-70,j=-70,k=69;i<70;i++)
+        for(var i=-70,j=-70,k=70;i<71;i++)
         {
             let fence_tranr = Mat4.identity()
             .times(Mat4.translation(i,-2.5,-j))
@@ -1144,7 +1139,6 @@ class Ring_Shader extends Shader {
 
 
 class Texture_Scroll_X extends Textured_Phong {
-    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #6.
     fragment_glsl_code() {
         return this.shared_glsl_code() + `
             varying vec2 f_tex_coord;
