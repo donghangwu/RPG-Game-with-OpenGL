@@ -570,7 +570,7 @@ export class Project extends Scene {
         this.bullet_info = [];//added by Wei Du
         this.spawning_creature = true;//added by Wei Du : [init_time, , init_pos, gravity]
         this.arrow_speed=40
-        this.gravity=9.5
+        this.gravity=9.8
         this.creature_info = [];//added by Wei Du
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 5, 0));
@@ -580,8 +580,25 @@ export class Project extends Scene {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
 
         this.new_line();
-        this.live_string(box => box.textContent = "- Arrow speed: "+this.arrow_speed+"- Gravity: "+this.gravity)
+        this.live_string(box => box.textContent = "- Arrow speed: "+this.arrow_speed+"m/s^2"+"    - Gravity: "+this.gravity+"m/s^2")
         this.new_line();
+        this.new_line();
+        this.key_triggered_button("Move Forward", ["w"], () => {
+            
+         });
+         this.key_triggered_button("Move Backward", ["s"], () => {
+            
+        });
+        this.key_triggered_button("Move Left", ["a"], () => {
+            
+        });
+        this.key_triggered_button("Move Right", ["d"], () => {
+            
+        });
+        this.key_triggered_button("JUMP", [" "], () => {
+            
+        });
+
         this.new_line();
         this.key_triggered_button("Shoot", ["f"], () => {
             this.draw_bullet=true;
@@ -596,23 +613,23 @@ export class Project extends Scene {
         this.new_line();
         this.key_triggered_button("Increase arrow speed", ["o"], () => {
            this.arrow_speed+=1;
-            console.log("speed:",this.arrow_speed)
+            //console.log("speed:",this.arrow_speed)
         });
         this.key_triggered_button("Decrease arrow speed", ["p"], () => {
             this.arrow_speed-=1;
-             console.log("speed:",this.arrow_speed)
+            // console.log("speed:",this.arrow_speed)
          });
 
         this.new_line();
         this.key_triggered_button("Increase gravity", ["["], () => {
             this.gravity+=0.5;
 
-            console.log("gravity:",this.gravity)
+            //console.log("gravity:",this.gravity)
         });
         this.key_triggered_button("Decrease gravity", ["]"], () => {
             this.gravity-=0.5;
 
-            console.log("gravity:",this.gravity)
+            //console.log("gravity:",this.gravity)
         });
         this.new_line();
     }
@@ -1135,8 +1152,6 @@ class Ring_Shader extends Shader {
     }
 
     vertex_glsl_code() {
-        // ********* VERTEX SHADER *********
-        // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
         return this.shared_glsl_code() + `
         attribute vec3 position;
         uniform mat4 model_transform;
@@ -1148,8 +1163,6 @@ class Ring_Shader extends Shader {
     }
 
     fragment_glsl_code() {
-        // ********* FRAGMENT SHADER *********
-        // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
         return this.shared_glsl_code() + `
         void main(){
 
