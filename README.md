@@ -1,8 +1,8 @@
 ## Team Members
 
 <li>Donghang Wu     605346965
-<li>JieXuan Fang    
-<li>Wei Du   
+<li>JieXuan Fang    805378130
+<li>Wei Du          805330794
 
 
 ## Design and Implementation:
@@ -49,3 +49,6 @@ simulate real-world graviation with the arrow
 #### Projectile motion
 simluate projectile motion for the arrow, and the user can change the initial
 speed of the arrow
+
+### References:
+Object File: https://www.turbosquid.com/3d-model/free/trees/obj?synonym=tree
