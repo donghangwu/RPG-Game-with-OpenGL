@@ -176,7 +176,7 @@ const Mouse_Picking = defs.Movement_Controls =
             this.new_line();
             this.key_triggered_button("UP", ["i"], () => 
             {
-                console.log("up!")
+                //console.log("up!")
                 
                 move=false;
                 this.matrix().post_multiply(Mat4.inverse(arrow_angle));
@@ -189,7 +189,7 @@ const Mouse_Picking = defs.Movement_Controls =
             }, undefined, () => {});
             this.key_triggered_button("DOWN", ["k"], () => 
             {
-                console.log("down!")
+                //console.log("down!")
                 move=false;
                 
                 this.matrix().post_multiply(Mat4.inverse(arrow_angle));
@@ -266,6 +266,8 @@ const Mouse_Picking = defs.Movement_Controls =
             this.inverse().pre_multiply(Mat4.translation(...this.thrust.times(+meters_per_frame)));
             //console.log("matrix",this.matrix(),"invserse",this.inverse())
             test_cam=this.inverse()
+            
+            //JUMP
             if(this.thrust[1]===-6)
             {
                 this.thrust[1]=0
@@ -274,7 +276,7 @@ const Mouse_Picking = defs.Movement_Controls =
                     this.matrix().post_multiply(Mat4.translation(...this.thrust.times(-meters_per_frame)));
                     this.inverse().pre_multiply(Mat4.translation(...this.thrust.times(+meters_per_frame)));
                     this.thrust[1]=0;
-                }, 120)
+                }, 220)
             }
 
             let new_pos = Mat4.inverse(test_cam);
@@ -933,7 +935,7 @@ class Ground extends Shape{
         {
             for(var j=-17;j<18;j++)
             {
-                defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(4*i,-5,4*j).times(Mat4.scale(4,1,4)))));
+                defs.Cube.insert_transformed_copy_into(this, [],((Mat4.translation(4*i,-5,4*j).times(Mat4.scale(2,1,2)))));
             }
 
         }
