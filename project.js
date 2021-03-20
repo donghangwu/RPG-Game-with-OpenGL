@@ -12,6 +12,7 @@ var tree_blocked = false;
 var mouse_x=0,mouse_y=0
 var move=true;
 var forward = false, backward = false;
+var left = false, right = false;
 var dead = false;
 // Camera coordinate system 
 // =======
@@ -143,7 +144,9 @@ const Mouse_Picking = defs.Movement_Controls =
                     arrow_angle=Mat4.identity()
                     in_arrow=Mat4.identity()
                 }
-                this.thrust[0] = 1}, undefined, () => this.thrust[0] = 0);
+                left = true
+               // this.thrust[0] = 1
+            }, undefined, () => left = false);
             this.key_triggered_button("Back", ["s"], () => {
                 if(!move)
                 {
@@ -166,7 +169,9 @@ const Mouse_Picking = defs.Movement_Controls =
                     arrow_angle=Mat4.identity()
                     in_arrow=Mat4.identity()
                 }
-                this.thrust[0] = -1}, undefined, () => this.thrust[0] = 0);
+                right = true;
+                //this.thrust[0] = -1
+            }, undefined, () => right = false);
 
             this.new_line();
             this.key_triggered_button("Down", ["z"], () => this.thrust[1] = 1, undefined, () => this.thrust[1] = 0);
@@ -338,6 +343,13 @@ const Mouse_Picking = defs.Movement_Controls =
                 this.thrust[2] = -1;
             else
                 this.thrust[2] = 0;
+
+            if(!blocked && !tree_blocked && left)
+                this.thrust[0] = 1;
+            else if (!blocked && !tree_blocked && right)
+                this.thrust[0] = -1;
+            else
+                this.thrust[0] = 0;
 
             const m = this.speed_multiplier * this.meters_per_frame,
                 r = this.speed_multiplier * this.radians_per_frame;
