@@ -6,20 +6,31 @@
 
 
 ## Design and Implementation:
-controls:
-'w'     : move forward
-'a'     : move left
-'d'     : move right
-'s'     : move back
-'space' : jump
-Move Mouse: Change direction
+| Keys  | Functionality |
+| --- | --- |
+| 'w' | move forward |
+| 'a' | move left | 
+| 's' | move back | 
+| 'd' | move right |
+| 'space' | Jump | 
+| 'Move Mouse' | Change direction | 
+| 'c' | randomly spawns monster |  
+| 'f' | shot arrow | 
+| 'i' | Up the shot angle | 
+| 'k' | Down the shot angle | 
+| 'o' | increase arrow initial speed | 
+| 'p' | decrease arrow initial speed |  
+| '[' | increase gravity | 
+| ']' | decrease gravity | 
 
-'c'     : randomly spawns monster
-'f'     : shot arrow
-'o'     : increase arrow initial speed
-'p'     : decrease arrow initial speed
-'['     : increase gravity
-']'     : decrease gravity
+
+## How to play
+Use WASD to move around, space to jump, move mouse the change the direction, 
+use f to shot an arrow, avoid being contacted by the monsters
+or you will be died. Use i k to adjust the arrow shot angle, use o p to adjust the arrow initial speed. Use [ ] to adjust the gravity.
+
+<br/>
+<br/>
 
 
 ## Advanced Features

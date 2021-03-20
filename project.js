@@ -598,17 +598,19 @@ export class Project extends Scene {
         this.key_triggered_button("JUMP", [" "], () => {
             
         });
+        this.key_triggered_button("spawn monsters", ["c"], () => {
+            this.spawning_creature=true;
 
+            //console.log("creature spawned!\n\n")
+        });
         this.new_line();
         this.key_triggered_button("Shoot", ["f"], () => {
             this.draw_bullet=true;
             this.creating_bullet = true;
             //console.log("shoot!\n\n")
         });
-        this.key_triggered_button("spawn monsters", ["c"], () => {
-            this.spawning_creature=true;
-
-            //console.log("creature spawned!\n\n")
+        this.key_triggered_button("Increase arrow shoot angle", ["i"], () => {
+        });        this.key_triggered_button("Decrease arrow shoot angle", ["k"], () => {
         });
         this.new_line();
         this.key_triggered_button("Increase arrow speed", ["o"], () => {
